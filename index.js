@@ -263,7 +263,7 @@ app.post('/book-treatment', async (req, res) => {
 });
 
 
-pp.post('/getuserinfoadmin', async (req, res) => {
+app.post('/getuserinfoadmin', async (req, res) => {
     try {
         const userInput = req.body.userinput;
         const user = await Users.findOne({
