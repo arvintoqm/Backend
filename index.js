@@ -226,6 +226,86 @@ app.get("/getuserinfo", authenticateToken, async (req, res) => {
     }
 });
 
+app.post('/book-treatment', async (req, res) => {
+    try {
+        const { name, username, treatment, day, time } = req.body;
+
+        // Find the date entry by day
+        let dateEntry = await Dates.findOne({ day: day });
+        if (!dateEntry) {
+            return res.status(404).json({ success: false, errors: "Date entry not found." });
+        }
+
+        await Users.findOneAndUpdate(
+            { username: username },
+            { $set: { treatmentType: "Treatment" } },
+            { new: true }
+        );
+
+        // Find the specific time slot and update booking
+        const updatedTimes = dateEntry.times.map((slot) => {
+            if (slot.time === time) {
+                slot.booking = `${name} (${username}) - ${treatment}`;
+            }
+            return slot;
+        });
+
+        dateEntry.times = updatedTimes;
+
+        // Save the updated date entry
+        await dateEntry.save();
+
+        res.json({ success: true, message: "Booking updated successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, errors: "Server error" });
+    }
+});
+
+
+pp.post('/getuserinfoadmin', async (req, res) => {
+    try {
+        const userInput = req.body.userinput;
+        const user = await Users.findOne({
+            $or: [
+                { email: userInput },
+                { username: userInput },
+                { phone: userInput}
+            ]
+        });
+        if (!user) {
+            return res.status(404).json({ success: false, errors: "User not found." });
+        }
+        res.json({ success: true, user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, errors: "Server error" });
+    }
+});
+
+// Creating Endpoint for updating treatments and information
+app.post('/updateuserinfo', async (req, res) => {
+    try {
+        const username = req.body.username;
+        const updatedTreatments = req.body.treatments;
+        const updatedTreatmentInfo = req.body.treatmentInfo;
+        const updatedProductInfo = req.body.productInfo;
+        console.log(req.body);
+
+        // Find user by username and update treatments and information
+        await Users.findOneAndUpdate(
+            { username: username },
+            { $set: { treatments: updatedTreatments, treatmentInfo: updatedTreatmentInfo, productInfo: updatedProductInfo, first: true } },
+            { new: true }
+        );
+
+        res.json({ success: true, message: "User updated successfully." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, errors: "Server error" });
+    }
+});
+
 // Dates Schema
 const Dates = mongoose.model("Dates", {
     day: { type: String, unique: true, required: true },
