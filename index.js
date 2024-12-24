@@ -62,6 +62,7 @@ app.post("/upload", upload.single("product"), async (req, res) => {
 
 // Schema for Creating Products
 const Product = mongoose.model("Product", {
+    id: { type: Number, required: true },
     name: { type: String, required: true },
     image: { type: String, required: true }, // Cloudinary URL
     shortDescription: { type: String, required: true },
