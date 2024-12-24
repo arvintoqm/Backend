@@ -39,6 +39,36 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Endpoint for image upload using Cloudinary
+app.post("/upload", upload.single("product"), async (req, res) => {
+    try {
+        const streamUpload = (req) => {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream((error, result) => {
+                    if (result) resolve(result);
+                    else reject(error);
+                });
+                stream.end(req.file.buffer);
+            });
+        };
+        const result = await streamUpload(req);
+        res.json({
+            success: true,
+            image_url: result.secure_url, // Cloudinary URL
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Image upload failed", error });
+    }
+});
+
+// Schema for Creating Products
+const Product = mongoose.model("Product", {
+    id: { type: Number, required: true },
+    name: { type: String, required: true },
+    image: { type: String, required: true }, // Cloudinary URL will be saved here
+    description: { type: String, required: true },
+    date: { type: Date, default: Date.now },
+});
+
 app.post("/addproduct", async (req, res) => {
     let products = await Product.find({});
     let id = products.length > 0 ? products[products.length - 1].id + 1 : 1;
@@ -50,33 +80,6 @@ app.post("/addproduct", async (req, res) => {
         shortDescription: req.body.shortDescription,
         longDescription: req.body.longDescription,
         categories: req.body.categories,
-    });
-
-    await product.save();
-    res.json({ success: true, name: req.body.name });
-});
-
-
-// Schema for Creating Products
-const Product = mongoose.model("Product", {
-    name: { type: String, required: true },
-    image: { type: String, required: true }, // Cloudinary URL
-    shortDescription: { type: String, required: true },
-    longDescription: { type: String, required: true },
-    categories: { type: [String], required: true }, // Array of categories
-    date: { type: Date, default: Date.now },
-});
-
-
-app.post("/addproduct", async (req, res) => {
-    let products = await Product.find({});
-    let id = products.length > 0 ? products[products.length - 1].id + 1 : 1;
-
-    const product = new Product({
-        id: id,
-        name: req.body.name,
-        image: req.body.image,
-        description: req.body.description,
     });
 
     await product.save();
