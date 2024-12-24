@@ -62,12 +62,14 @@ app.post("/upload", upload.single("product"), async (req, res) => {
 
 // Schema for Creating Products
 const Product = mongoose.model("Product", {
-    id: { type: Number, required: true },
     name: { type: String, required: true },
-    image: { type: String, required: true }, // Cloudinary URL will be saved here
-    description: { type: String, required: true },
+    image: { type: String, required: true }, // Cloudinary URL
+    shortDescription: { type: String, required: true },
+    longDescription: { type: String, required: true },
+    categories: { type: [String], required: true }, // Array of categories
     date: { type: Date, default: Date.now },
 });
+
 
 app.post("/addproduct", async (req, res) => {
     let products = await Product.find({});
@@ -85,6 +87,7 @@ app.post("/addproduct", async (req, res) => {
     await product.save();
     res.json({ success: true, name: req.body.name });
 });
+
 
 // Delete Product
 app.post("/removeproduct", async (req, res) => {
